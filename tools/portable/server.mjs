@@ -82,6 +82,20 @@ function notFound(res) {
   res.end('404 Not Found')
 }
 
+/**
+ * 在图片目录里找文件。若请求的是 .png 而目录里只有同名 .webp
+ * （卡面备份仓库提供的是 WebP q85 版本），自动改用 .webp。
+ */
+function findImage(dir, rel) {
+  const direct = safeJoin(dir, rel)
+  if (direct && isFile(direct)) return direct
+  if (/\.png$/i.test(rel)) {
+    const alt = safeJoin(dir, rel.replace(/\.png$/i, '.webp'))
+    if (alt && isFile(alt)) return alt
+  }
+  return null
+}
+
 const IMG_CACHE = 'public, max-age=604800'
 
 function handle(req, res) {
@@ -98,18 +112,18 @@ function handle(req, res) {
 
   // 缩略图：优先于 /cardimg 匹配，顺序不能反。
   if (urlPath.startsWith('/cardimg/thumb/')) {
-    const file = safeJoin(THUMB_DIR, urlPath.slice('/cardimg/thumb/'.length))
-    if (file && isFile(file)) return send(res, file, IMG_CACHE)
+    const file = findImage(THUMB_DIR, urlPath.slice('/cardimg/thumb/'.length))
+    if (file) return send(res, file, IMG_CACHE)
     return notFound(res)
   }
 
   // 原图：有就用，没有（极简版）回落到缩略图，避免详情页出现裂图。
   if (urlPath.startsWith('/cardimg/')) {
     const rel = urlPath.slice('/cardimg/'.length)
-    const full = safeJoin(FULL_DIR, rel)
-    if (full && isFile(full)) return send(res, full, IMG_CACHE)
-    const thumb = safeJoin(THUMB_DIR, rel)
-    if (thumb && isFile(thumb)) return send(res, thumb, IMG_CACHE)
+    const full = findImage(FULL_DIR, rel)
+    if (full) return send(res, full, IMG_CACHE)
+    const thumb = findImage(THUMB_DIR, rel)
+    if (thumb) return send(res, thumb, IMG_CACHE)
     return notFound(res)
   }
 
