@@ -1,0 +1,22 @@
+{
+  "name": "kairisei-wiki",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "乖离性百万亚瑟王 国服资料站（卡牌 / Boss 数据查询）",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "etl": "python tools/etl.py"
+  },
+  "dependencies": {
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.52.5",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "vite": "^6.0.7"
+  }
+}

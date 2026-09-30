@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.cache/
+shots/
+_local/
+
+# WorkBuddy 过程产物：分析脚本输出、改动前备份、临时截图（非工程内容）
+.workbuddy/
+*.log
+
+# Python 字节码缓存
+__pycache__/
+*.pyc
