@@ -134,7 +134,8 @@ export function formatNumber(value) {
 }
 
 /**
- * 技能效果值：ETL 按官方「機能」模型输出的 valueSlots = { "1": ["val", a, b, c], "11": ["pct", a, b, c] }。
+ * 技能效果值：ETL 按官方「機能」模型输出的 valueSlots = { "1": ["val", a, b, c], "11": ["pct", a, b, c] }；
+ * 可选第 5 位为取整模式，'floor' 表示游戏按整数除法截断（如 REFLECTION），缺省四舍五入。
  * 键就是技能说明里的 {N} 编号：N = 機能序号(0-based) × 10 + 该機能的显示值序号(1-based)，
  * 機能行取自 skill_player.csv 的「機能ID」列所指技能（skill_role_player → skill_role 回落）。
  * 数值 = round((a + b × 技能等级) / c)，只随技能等级变化，与 ATK / INT 无关。
@@ -142,10 +143,12 @@ export function formatNumber(value) {
  */
 export function slotAt(skill, token, level) {
   const slot = skill?.valueSlots?.[String(token)]
-  if (!Array.isArray(slot) || slot.length !== 4) return null
+  if (!Array.isArray(slot) || slot.length < 4) return null
   const [, a, b, c] = slot
   if (!c) return null
-  return Math.round((a + b * (level || 0)) / c)
+  const raw = (a + b * (level || 0)) / c
+  // 第 5 位为取整模式：'floor' = 游戏整数除法（截断），缺省四舍五入
+  return slot[4] === 'floor' ? Math.floor(raw) : Math.round(raw)
 }
 
 /** 该槽位是百分比（'pct'，随自身当前 HP 变化）还是固定数值（'val'）。 */

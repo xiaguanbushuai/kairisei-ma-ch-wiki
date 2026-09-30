@@ -19,7 +19,7 @@ import { getMatcher, keywordLink, tokenize } from '../keywords.js'
 
 const props = defineProps({
   text: { type: String, default: '' },
-  /** ETL 输出的效果值槽位表：{ "<token>": ["val" | "pct", a, b, c] } */
+  /** ETL 输出的效果值槽位表：{ "<token>": ["val" | "pct" | "flat", a, b, c, mode?] } */
   slots: { type: Object, default: () => ({}) },
   /** 数值对应的技能等级，用于计算与鼠标悬停提示 */
   level: { type: Number, default: null },
@@ -36,13 +36,15 @@ const TOKEN_RE = /\{(\d+)\}/g
 
 function slotOf(token) {
   const slot = props.slots?.[token]
-  return Array.isArray(slot) && slot.length === 4 ? slot : null
+  return Array.isArray(slot) && slot.length >= 4 ? slot : null
 }
 
 function valueOf(slot) {
   const [, a, b, c] = slot
   if (!c) return null
-  return Math.round((a + b * (props.level || 0)) / c)
+  const raw = (a + b * (props.level || 0)) / c
+  // 第 5 位为取整模式：'floor' = 游戏整数除法（截断），缺省四舍五入
+  return slot[4] === 'floor' ? Math.floor(raw) : Math.round(raw)
 }
 
 // 全文本：每个 {N} 都查一次槽位表

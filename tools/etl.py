@@ -406,6 +406,14 @@ def is_numeric(value: str) -> bool:
     return bool(re.fullmatch(r"\d+", (value or "").strip()))
 
 
+def is_blank_desc(value: str) -> bool:
+    """変体行（発動条件分岐行）的 desc 视为空：官方表里 6189 行是空串，
+    另有 190 行把 desc 写成字面 "0"。这些行不是本体描述，但它们的「機能ID」([49])
+    正是条件分岐变体所指的兄弟技能，必须参与变体编号。"""
+    desc = text(value)
+    return (not desc) or desc == "0"
+
+
 # ---------------------------------------------------------------- 读入源数据
 
 
@@ -457,7 +465,11 @@ SELF_PARAM_TYPES = {
     "ATK_UP_BY_SELF_PARAM", "DEF_UP_BY_SELF_PARAM", "ATK_BREAK_BY_SELF_PARAM",
     "GUARD_BREAK_BY_SELF_PARAM", "PARAM_LIMIT_BREAK_BY_SELF_PARAM",
 }
-# 已驗證：攻击类 —— 显示值1 = (パラメータ1 × 1000 + パラメータ2 × 等级) ÷ パラメータ3
+# 已驗證：攻击类 —— 显示值1 = パラメータ1 + パラメータ2 × 等级 ÷ 1000
+#   ！！パラメータ3 是「威力倍率 ×1000」，不是除数：1011114792 的文本写着
+#   「物理攻撃力300%の4回攻撃」而它的 p3 = 3000，直接印证。
+#   交叉验证：技能里「祝福后」重述同一效果的 BLESS 行（无除法）与该行数值在
+#   20 个 p3 ≠ 1000 的样本上完全一致，而按 ÷p3 读法 0 个一致（check_divisor.py）。
 ATTACK_TYPES = {"ATTACK_AA", "ATTACK_AP", "ATTACK_PA", "ATTACK_PP"}
 # 已驗證：回复类 —— 与攻击类同布局：(パラメータ1 × 1000 + パラメータ2 × 等级) ÷ パラメータ3
 #   实测 10177067 感谢的祝歌 lv80：14305692 (4089, 57000, 1000) → (4089000 + 4560000) ÷ 1000 = 8649 ✓
@@ -470,6 +482,60 @@ CRITICAL_TYPES = {"CRITICAL_UP"}
 # 已驗證：BURST_GAUGE_QUICK_UP —— 显示值1 = パラメータ1（圣剑解放加成%），直接读、不随等级变化
 #   实测 10180052：14404221 (5, 0) → 5% ✓
 BURST_GAUGE_TYPES = {"BURST_GAUGE_QUICK_UP"}
+# 已驗證（用户游戏内实测，2026-09-30）：REGENERATE_FIXED —— 布局与攻击/回复类同构、整体后移 1 位
+#   显示值1 = (パラメータ2 × 1000 + パラメータ3 × 等级) ÷ パラメータ4
+#   实测 14200642 (3, 532, 9000, 1000) → lv1 = 541、lv80 = 1252 ✓（10157016 龙骑型艾菲·歌姬）
+REGENERATE_FIXED_TYPES = {"REGENERATE_FIXED"}
+# 已驗證：ATTR_DEF_UP / ATTR_DEF_DOWN（各属性抗性增减）
+#   パラメータ1 = 持续回合、[4] = 基数、[5] = 每级增量、[6] = 属性；除数恒 1000
+#   显示值序号为 2（与官方「表示パラメータ番号」= 2 一致，对应文本里的 {2}）
+#   实测 12505142 (3, 0, 0, 997, 14000, FIRE) → lv1 = 1011、lv80 = 2117 ✓（10157008 龙骑型艾菲·富豪）
+#   实测 13602861 (3, 0, 0, 1225, 81000, ICE) → lv1 = 1306、lv80 = 7705 ✓（10157028 外敌型塞莉艾）
+ATTR_DEF_TYPES = {"ATTR_DEF_UP", "ATTR_DEF_DOWN"}
+ATTR_KEYS = {"FIRE", "ICE", "WIND", "LIGHT", "DARK"}
+# 已驗證：REFLECTION（反射所受伤害%）—— 显示值1 = (パラメータ2 + パラメータ3 × 等级) ÷ 100
+#   游戏为整数除法（截断非四舍五入）：实测 12400252 (2, 15400, 770) → lv1 = 161、lv80 = 770 ✓（10154040）
+#   （round(161.7) = 162 与游戏不符，故该槽位带 floor 标记）
+REFLECTION_TYPES = {"REFLECTION"}
+# 已驗證：COVERING（嘲讽减伤%）/ WEAKNESS（标记易伤%）—— 固定值 = パラメータ2 ÷ 10，不随等级
+#   实测 12504722 (1, 500) → 50% ✓（10153008）；13602672 (3, 100) → 10% ✓，
+#   同卡条件变体文本「变更为 30%」与该机能另一行吻合（10154060）
+COVER_WEAK_TYPES = {"COVERING", "WEAKNESS"}
+# 已驗證：ATK_OP_DRAIN（吸血%）—— 固定值 = パラメータ1，不随等级
+#   实测 12101592 (50) → 50% ✓（10156008 新春型斯卡哈）
+DRAIN_TYPES = {"ATK_OP_DRAIN"}
+# 已驗證：ENCHANT（各属性追加伤害）—— 显示值1 = パラメータ2 + パラメータ5 × 技能等级（不经除法）
+#   パラメータ1 = 持续回合、[2] = 基数、[3] = 恒 1000、[5] = 每级增量、[6] = 属性
+#   实测 12400261 (1, 675, 1000, 0, 45, ICE) → lv1 = 720、lv80 = 4275 ✓（10155036 圣夜型乌莎哈）
+#   实测 12505402 (2, 2210, 1000, 0, 113, ICE) → lv1 = 2323、lv80 = 11250 ✓（10159008 异界型尼禄）
+#   仅接受 [3] == 1000 的行（880/884）；[3] = 1300 的 4 行量纲存疑，保持留空（宁缺勿错）
+ENCHANT_TYPES = {"ENCHANT"}
+# 已驗證：ATK_OP_PIERCING（无视 N% 物/魔防御）—— 固定值 = パラメータ1
+#   实测 11106072 (70) → 70% ✓（10156056 戏雪型柯妮·佣兵）
+ATK_PIERCING_TYPES = {"ATK_OP_PIERCING"}
+# 已驗證：持续伤害族（毒/燃烧/冰冻/裂风/感电）—— 显示值2 = (パラメータ4 × 1000 + パラメータ5 × 等级) ÷ 1000
+#   パラメータ1 = 回合、[2] = 100、[4] = 基数、[5] = 每级增量、[6] = 系数、[8] = 参照属性
+#   实测 5 张卡全部一致：13604371/13604251/13604101/13604701 (2,100,0,200,4720,500) → lv1 = 204、lv80 = 577 ✓
+#   （10173012 侵蚀型阿莱米拉 / 10172044 礼装型珀西瓦尔 / 10170048 / 10175064 / 10169052）
+DOT_TYPES = {"POISON", "BURN", "FREEZE", "BLEED", "ELECTRIC"}
+# 已驗證：BLESS（「祝福」发动后重述的强化效果）—— 显示值 7/8/9 = 基数 + 每级增量（不经除法）
+#   三组 (基数, 每级增量) 相邻排列：[4][5] → 显示值7、[6][7] → 显示值8、[8][9] → 显示值9
+#   实测 12507612 (4,0,1,4732,66) → 显示值7 lv1 = 4798、lv80 = 10012 ✓（10173060 侵蚀型雪莉柯特·富豪）
+#   显示值8/9 无实测，由结构推定：14404092 的 8 = 基础 HEAL_FIXED 同值；
+#   1011114792 的 9 : 8 = 155000:31000 = 5:1（「每张卡 +N，最多 5 张」的 5 倍关系）
+BLESS_TYPES = {"BLESS"}
+# 已驗證：TRANCE_GAUGE_VALUE_DOWN（灼热破坏%）—— 固定值 = パラメータ2，[1] 必须是 "TRANCE"
+#   实测 1013608202 (TRANCE, 8) → 8% ✓（10256008 圣夜型佣兵亚瑟&蒂蕾妮娅）
+TRANCE_TYPES = {"TRANCE_GAUGE_VALUE_DOWN"}
+# 已驗證：ATK_OP_DRAIN_ALL（全队吸血%）—— 固定值 = パラメータ1
+#   实测 11108802 (10) → 10% ✓（10170004 复制型斯卡哈·幼魔女）
+DRAIN_ALL_TYPES = {"ATK_OP_DRAIN_ALL"}
+# 已驗證：ATK_OP_REVENGE（按累计损血提升威力%）—— 固定值 = パラメータ1，[3] 必须是参照属性名
+#   实测 11106092 (40, 0, MAX_HP, 50) → 40% ✓（10155092 异界型杏子&佣兵亚瑟）
+REVENGE_TYPES = {"ATK_OP_REVENGE"}
+# 已驗證：ATK_OP_DAMAGE_INCREASE（叠加当前血量的威力%）—— 显示值2 = パラメータ3 ÷ 10
+#   实测 11107852 (0, 0, 200, 0, HP) → 20% ✓（10166073 异界型雷姆）
+DAMAGE_INC_TYPES = {"ATK_OP_DAMAGE_INCREASE"}
 
 
 def slot_rules(eff_type: str, params: list, raw: list) -> dict:
@@ -477,7 +543,7 @@ def slot_rules(eff_type: str, params: list, raw: list) -> dict:
     p = params
     if eff_type in ATTACK_TYPES:
         if (p[0] or 0) > 0 and (p[2] or 0) > 1:
-            return {1: ("val", p[0] * 1000, p[1] or 0, p[2])}
+            return {1: ("val", p[0] * 1000, p[1] or 0, 1000)}
         return {}
     if eff_type in STAT_FIXED_TYPES:
         # 结构性校验：パラメータ2 必须是属性名、パラメータ3 必须为 1
@@ -494,7 +560,7 @@ def slot_rules(eff_type: str, params: list, raw: list) -> dict:
         return out
     if eff_type in HEAL_TYPES:
         if (p[0] or 0) > 0 and (p[2] or 0) > 1:
-            return {1: ("val", p[0] * 1000, p[1] or 0, p[2])}
+            return {1: ("val", p[0] * 1000, p[1] or 0, 1000)}
         return {}
     if eff_type in CRITICAL_TYPES:
         if (p[1] or 0) > 0:
@@ -503,6 +569,71 @@ def slot_rules(eff_type: str, params: list, raw: list) -> dict:
     if eff_type in BURST_GAUGE_TYPES:
         if (p[0] or 0) > 0:
             return {1: ("flat", p[0], 0, 1)}
+        return {}
+    if eff_type in REGENERATE_FIXED_TYPES:
+        # 结构校验：回合 > 0、基数 > 0、除数 > 1（增量可为 0 = 固定值，不随等级）
+        if (p[0] or 0) > 0 and (p[1] or 0) > 0 and (p[3] or 0) > 1:
+            return {1: ("val", p[1] * 1000, p[2] or 0, p[3], "floor")}
+        return {}
+    if eff_type in ATTR_DEF_TYPES:
+        # 结构校验：回合 > 0、基数 > 0、[6] 必须是属性名（增量可为 0）
+        if (p[0] or 0) > 0 and (p[3] or 0) > 0 and raw[5] in ATTR_KEYS:
+            return {2: ("val", p[3] * 1000, p[4] or 0, 1000, "floor")}
+        return {}
+    if eff_type in REFLECTION_TYPES:
+        if (p[1] or 0) > 0 and (p[2] or 0) > 0:
+            return {1: ("val", p[1], p[2], 100, "floor")}
+        return {}
+    if eff_type in COVER_WEAK_TYPES:
+        # パラメータ3 ≠ 0 的行来自共通表且量级/语义不同，暂不处理（宁缺勿错）
+        if (p[1] or 0) > 0 and (p[2] or 0) == 0:
+            return {1: ("flat", p[1], 0, 10, "floor")}
+        return {}
+    if eff_type in DRAIN_TYPES:
+        if (p[0] or 0) > 0:
+            return {1: ("flat", p[0], 0, 1, "floor")}
+        return {}
+    if eff_type in ENCHANT_TYPES:
+        # 结构校验：回合 > 0、基数 > 0、[3] 必须为 1000、[6] 必须是属性名（增量可为 0）
+        if ((p[0] or 0) > 0 and (p[1] or 0) > 0 and (p[2] or 0) == 1000
+                and raw[5] in ATTR_KEYS):
+            return {1: ("val", p[1], p[4] or 0, 1)}
+        return {}
+    if eff_type in ATK_PIERCING_TYPES:
+        # 结构校验：p1 > 0 且 p2 == 0（p2 ≠ 0 的 34 行量纲存疑，留空不猜）
+        if (p[0] or 0) > 0 and (p[1] or 0) == 0:
+            return {1: ("flat", p[0], 0, 1)}
+        return {}
+    if eff_type in DOT_TYPES:
+        # 结构校验：回合 > 0、系数 > 0、基数 > 0、[8] 必须是参照属性名
+        if (p[0] or 0) > 0 and (p[1] or 0) > 0 and (p[3] or 0) > 0 and raw[7] in STAT_TOKENS:
+            return {2: ("val", p[3] * 1000, p[4] or 0, 1000, "floor")}
+        return {}
+    if eff_type in BLESS_TYPES:
+        # 「祝福」后重述的效果值：三组 (基数, 每级增量) 相邻排列，不经除法
+        if (p[0] or 0) > 0 and (p[2] or 0) == 1:
+            out = {}
+            for unit, ai, bi in ((7, 3, 4), (8, 5, 6), (9, 7, 8)):
+                if (p[ai] or 0) or (p[bi] or 0):
+                    out[unit] = ("val", p[ai] or 0, p[bi] or 0, 1)
+            return out
+        return {}
+    if eff_type in TRANCE_TYPES:
+        if raw[0] == "TRANCE" and (p[1] or 0) > 0:
+            return {1: ("flat", p[1], 0, 1)}
+        return {}
+    if eff_type in DRAIN_ALL_TYPES:
+        if (p[0] or 0) > 0:
+            return {1: ("flat", p[0], 0, 1)}
+        return {}
+    if eff_type in REVENGE_TYPES:
+        if (p[0] or 0) > 0 and raw[2] in STAT_TOKENS:
+            return {1: ("flat", p[0], 0, 1)}
+        return {}
+    if eff_type in DAMAGE_INC_TYPES:
+        # 仅「叠加目前血量/攻击力 X% 的威力」这一档（unit 2）；unit 1 的「点伤害」档未经实测，留空
+        if (p[2] or 0) > 0:
+            return {2: ("flat", p[2], 0, 10)}
         return {}
     return {}
 
@@ -528,7 +659,9 @@ def load_role_rows() -> dict:
 
 
 def resolve_slots(func_id: str, roles: dict, variant_ids: list | None = None) -> dict:
-    """把「本体 + 発動条件分岐変体」的機能行列表转成 {token: [kind, a, b, c]}。
+    """把「本体 + 発動条件分岐変体」的機能行列表转成 {token: [kind, a, b, c, mode?]}。
+
+    mode 缺省为 round（四舍五入）；"floor" 表示游戏用整数除法需向下取整（如 REFLECTION）。
 
     槽位规则（全库验证 93.03%）：槽位 = 5 × 变体序号 + 变体内行号；
     token = 槽位 × 10 + 显示值序号（1 = 百分比/首值、2 = 基值）。
@@ -543,20 +676,31 @@ def resolve_slots(func_id: str, roles: dict, variant_ids: list | None = None) ->
     for variant_index, (_fid, rows) in enumerate(blocks):
         for row_index, (eff_type, params, raw) in enumerate(rows[:5]):
             for unit, rule in slot_rules(eff_type, params, raw).items():
-                kind, a, b, c = rule
-                per_skill[str((variant_index * 5 + row_index) * 10 + unit)] = [kind, a, b, c]
+                kind, a, b, c = rule[0], rule[1], rule[2], rule[3]
+                slot = [kind, a, b, c]
+                # 第 5 位为取整模式；仅非默认（round）时写出，避免无谓改动既有数据
+                if len(rule) > 4 and rule[4] != "round":
+                    slot.append(rule[4])
+                per_skill[str((variant_index * 5 + row_index) * 10 + unit)] = slot
     return per_skill
 
 
 def variant_func_ids(variants: list, chosen_row: list) -> list:
-    """同一技能 ID 的其余行 = 本体描述之外的発動条件分岐行（desc 为空），
-    取它们的「機能ID」（[49]）所指技能的角色行，按行序编号为变体 1、2、3…"""
+    """同一技能 ID 的其余每一行 = 一个「発動条件分岐」機能ブロック，
+    取它们的「機能ID」（[49]）所指技能的角色行，按行序编号为变体 1、2、3…
+
+    - 不去重：同一機能ID 可以出现多次（如 1012400522 的分岐行 1/2 都指向 1012400524，
+      但 token 里的 {151} 要求它是「第 3 个变体」），去重会把编号整体前移。
+    - 不再按 desc 是否为空过滤：13600492 这类技能的変体行同样带着完整 desc
+      （文本相同、[49] 指向兄弟技能 13600494），过滤掉会让 {71} 变成越界槽。
+    实测四种取法的占位符覆盖率：blank 99.70% / blank-nodedup 99.79% /
+    all 99.73% / all-nodedup 99.82%（越界槽 0，其余三法分别剩 24/5/19 个）。"""
     out: list = []
     for row in variants:
-        if row is chosen_row or text(at(row, 3)).strip():
+        if row is chosen_row:
             continue
         fid = at(row, 49).strip()
-        if fid and fid not in out:
+        if fid:
             out.append(fid)
     return out
 
@@ -581,8 +725,8 @@ def build_player_skills() -> dict[str, dict]:
         best = None
         for index, row in enumerate(variants):
             desc = text(at(row, 3))
-            if not desc.strip():
-                continue                      # 6118 条无 desc 的重复行（旧实现会覆盖正式行）
+            if is_blank_desc(desc):
+                continue                      # 変体行（desc 空或字面 "0"），旧实现会覆盖正式行
             func_id = at(row, 49).strip() or skill_id
             slots = resolve_slots(func_id, roles, variant_func_ids(variants, row))
             desc_tokens = sorted({m for m in TOKEN_RE.findall(desc)}, key=int)
