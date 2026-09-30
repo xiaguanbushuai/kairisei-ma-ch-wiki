@@ -1,13 +1,9 @@
 /**
  * 通过 CDP 对页面截图 + 抓取正文文本（免依赖，Node 22 自带 fetch / WebSocket）。
  *
- * 背景：本机 agent-browser 的 Chrome 自动启动失败（exit code 3），
- * 因此改为先手动拉起 Chrome 的调试端口，再用本脚本连接。
- *
- * 用法：
- *   # 1) 先启动 Chrome（headless + 调试端口）
- *   "/c/Users/Administrator/.agent-browser/browsers/chrome-154.0.8037.57/chrome.exe" \
- *     --headless=new --no-sandbox --disable-gpu --hide-scrollbars \
+ * 用法（通常直接跑 tools/shot.sh，它负责拉起和关闭 Chrome）：
+ *   # 1) 手动启动 Chrome（headless + 调试端口），路径换成你自己的 chrome.exe
+ *   chrome --headless=new --no-sandbox --disable-gpu --hide-scrollbars \
  *     --remote-debugging-port=9222 --user-data-dir=/tmp/cprof about:blank
  *
  *   # 2) 截图

@@ -15,15 +15,19 @@
 from __future__ import annotations
 
 import argparse
-import os
+import sys
 import time
 from multiprocessing import Pool
 from pathlib import Path
 
 from PIL import Image
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import local_paths  # noqa: E402  （tools/local_paths.py：统一的路径解析）
+
 PROJECT = Path(__file__).resolve().parent.parent
-DEFAULT_SRC = Path(os.environ.get("KAIRI_SRC", "D:/新建文件夹 (2)/kairisei-ma-cn602-server")) / "resource-set/resources/image/chr51"
+DEFAULT_SRC = local_paths.image_root() / "chr51"
 DEFAULT_OUT = PROJECT.parent / "kairisei-ma-ch-cards" / "images" / "chr51"
 
 

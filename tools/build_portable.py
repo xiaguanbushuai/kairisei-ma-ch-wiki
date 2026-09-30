@@ -29,16 +29,25 @@ from pathlib import Path
 PROJECT = Path(__file__).resolve().parent.parent
 PORTABLE_SRC = PROJECT / "tools" / "portable"
 
+sys.path.insert(0, str(PROJECT / "tools"))
+
+import local_paths  # noqa: E402  （tools/local_paths.py：统一的路径解析）
+
 DEFAULT_OUT = PROJECT.parent / "release" / "kairisei-wiki-portable"
 PACKAGE_NAME = "kairisei-wiki-portable"
 
+# 便携运行时的候选来源，按顺序取第一个存在的 node.exe：
+#   1) 工程内自备（把便携 node.exe 放到 runtime/）
+#   2) 系统安装的 Node.js
+#   3) ~/.workbuddy 托管运行时（WorkBuddy 环境）
 NODE_CANDIDATES = [
+    PROJECT / "runtime" / "node.exe",
+    Path("C:/Program Files/nodejs/node.exe"),
     Path.home() / ".workbuddy/binaries/node/versions/22.12.0/node.exe",
     Path.home() / ".workbuddy/binaries/node/versions/22.22.2-3/node.exe",
-    Path("C:/Program Files/nodejs/node.exe"),
 ]
 
-DEFAULT_IMAGE_ROOT = Path("D:/新建文件夹 (2)/kairisei-ma-cn602-server/resource-set/resources/image")
+DEFAULT_IMAGE_ROOT = local_paths.image_root()
 
 
 def human(size: int) -> str:

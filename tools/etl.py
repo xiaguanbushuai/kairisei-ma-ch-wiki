@@ -19,9 +19,11 @@ import sys
 import time
 
 sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-DEFAULT_SRC = r"D:\新建文件夹 (2)\kairisei-ma-cn602-server\resource-set"
-SRC = os.environ.get("KAIRI_SRC", DEFAULT_SRC)
+import local_paths  # noqa: E402  （tools/local_paths.py：统一的路径解析）
+
+SRC = str(local_paths.resource_set_dir())
 CONTROL = os.path.join(SRC, "_local", "control", "server")
 CARD_MASTER = os.path.join(CONTROL, "cn602-card-master")
 BATTLE_MASTER = os.path.join(CONTROL, "cn602-battle-master")
@@ -1302,7 +1304,8 @@ def main() -> int:
     outputs = {
         "meta.json": {
             "generated": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "source": SRC,
+            # 只记录资源集目录名，避免把本机绝对路径写进公开数据
+            "source": os.path.basename(os.path.normpath(SRC)),
             "counts": {
                 "cards": len(cards),
                 "cardFamilies": len(family_ids),

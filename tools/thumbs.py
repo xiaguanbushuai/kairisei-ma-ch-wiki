@@ -18,8 +18,11 @@ from PIL import Image
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-DEFAULT_IMAGE_ROOT = r"D:\新建文件夹 (2)\kairisei-ma-cn602-server\resource-set\resources\image"
-IMAGE_ROOT = os.environ.get("KAIRI_IMAGE_ROOT", DEFAULT_IMAGE_ROOT)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import local_paths  # noqa: E402  （tools/local_paths.py：统一的路径解析）
+
+IMAGE_ROOT = str(local_paths.image_root())
 
 PROJECT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 THUMB_ROOT = os.path.join(PROJECT, ".cache", "thumbs")

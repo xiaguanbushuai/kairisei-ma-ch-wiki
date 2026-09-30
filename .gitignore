@@ -14,3 +14,6 @@ __pycache__/
 
 # 便携包构建输出
 release/
+
+# 本机专属路径配置（模板见 tools/local_config.example.json）
+tools/local_config.json

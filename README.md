@@ -50,15 +50,22 @@ npm install --ignore-scripts
 
 ### 3. 准备数据源
 
-数据源是 [kuuhaku1314/kairisei-ma-ch](https://github.com/kuuhaku1314/kairisei-ma-ch) 服务端发行包里的 `resource-set/`（官方主表 CSV + 卡面原图）。下载并解压后，两种接入方式任选：
+数据源是 [kuuhaku1314/kairisei-ma-ch](https://github.com/kuuhaku1314/kairisei-ma-ch) 服务端发行包里的 `resource-set/`（官方主表 CSV + 卡面原图，解压后约 13GB）。下载解压后，**任选一种**方式告诉脚本它在哪：
 
-- **方式 A**：放在默认路径 `D:\新建文件夹 (2)\kairisei-ma-cn602-server\resource-set`
-- **方式 B**：放在任意位置，通过环境变量指定（Git Bash 示例）：
+| 方式 | 做法 | 适用场景 |
+| --- | --- | --- |
+| 环境变量 | 设 `KAIRI_SRC` = 资源集根目录；卡面原图目录默认按 `resources/image` 推导，也可用 `KAIRI_IMAGE_ROOT` 单独指定 | 临时跑一次 / CI |
+| 本地配置 | 复制 `tools/local_config.example.json` 为 `tools/local_config.json` 并填入路径 | 日常开发（该文件不会被提交） |
+| 默认位置 | 把资源集放到工程平级：`<工程上级目录>/kairisei-ma-cn602-server/resource-set` | 懒人方案 |
+
+Git Bash 下用环境变量的写法：
 
 ```bash
-export KAIRI_SRC="/d/games/kairisei-ma-cn602-server/resource-set"          # 主表 CSV
-export KAIRI_IMAGE_ROOT="/d/games/kairisei-ma-cn602-server/resource-set/resources/image"  # 卡面原图
+export KAIRI_SRC="/d/games/kairisei-ma-cn602-server/resource-set"
 ```
+
+> 解析顺序统一为：**环境变量 → `tools/local_config.json` → 默认位置**。
+> Python 侧实现在 `tools/local_paths.py`，Vite 侧在 `vite.config.js` 顶部，两侧共用同一套规则。
 
 实际用到的目录只有两处（其余为服务端运行资源，可不管）：
 
@@ -73,12 +80,12 @@ resource-set/
 ### 4. 生成数据与缩略图
 
 ```bash
-python tools/etl.py       # 官方 CSV → public/data/*.json（约 26MB，几十秒）
+python tools/etl.py       # 官方 CSV → public/data/*.json（约 26MB，约 4 秒）
 python tools/thumbs.py    # 卡面缩略图 → .cache/thumbs（4385 张约 68MB，全量约 4 分钟）
 ```
 
-`public/data/` 与 `.cache/thumbs/` 均已 gitignore，克隆仓库后必须重新生成。
-若仓库里已附带最新数据（见 Releases 附件说明），也可直接放到对应目录跳过此步。
+- `public/data/*.json`（26MB 数据快照）**已随仓库提供**，克隆即可直接开发；想基于最新资源集重新生成，跑一次 `etl.py` 覆盖即可。
+- `.cache/thumbs/` 未进仓库（68MB），**必须本地跑一次 `thumbs.py`**，否则列表页看不到卡面缩略图。
 
 ### 5. 开发调试
 
@@ -104,7 +111,7 @@ python tools/build_portable.py --full-images   # 完整版（附带 5.4GB 原图
 ## 项目结构
 
 ```
-├─ public/data/            # ETL 产物（gitignore，克隆后重新生成）
+├─ public/data/            # ETL 数据快照（已随仓库提供；重生成见 tools/etl.py）
 ├─ src/
 │  ├─ views/               # Home / CardList / CardDetail / SkillList / BossList / BossDetail / ItemList
 │  ├─ components/SkillText.vue   # 技能文本渲染（关键词高亮 + {N} 数值解算）
@@ -116,7 +123,10 @@ python tools/build_portable.py --full-images   # 完整版（附带 5.4GB 原图
 │  ├─ thumbs.py            # 卡面缩略图（Pillow FASTOCTREE 量化）
 │  ├─ webp_full.py         # 卡面 PNG → WebP q85 批量转码（供备份仓库）
 │  ├─ build_portable.py    # 便携包打包脚本
+│  ├─ local_paths.py       # 资源集路径解析（环境变量 → 本地配置 → 默认值）
+│  ├─ local_config.example.json  # 本机路径配置模板（复制为 local_config.json 使用）
 │  ├─ source_override.json # 卡牌入手途径手工覆盖表
+│  ├─ shot.sh / shot.mjs   # 无头浏览器截图工具（开发辅助）
 │  └─ portable/            # 便携包内置文件（零依赖本地服务、启动脚本、授权）
 ├─ docs/                   # README 截图
 └─ vite.config.js          # dev server + 卡面图片中间件
@@ -146,6 +156,7 @@ dist/ → 便携包 web/
 
 ## 授权与免责
 
-- 站点代码：PolyForm Noncommercial 1.0.0（仅限非商业使用，见 `tools/portable/LICENSE`）
-- 卡牌名称、技能文本、立绘等游戏素材版权归 **SQUARE ENIX CO., LTD.** 及原运营方所有
-- 本站为爱好者制作的非盈利资料查询工具，与官方无任何关联；请勿二次分发原始素材
+- **代码**：PolyForm Noncommercial 1.0.0 —— 允许非商业目的的使用、修改与分发，但必须保留授权声明；禁止任何商业用途。全文见根目录 [LICENSE](LICENSE)。
+- **游戏素材**（卡牌名称、技能文本、立绘、Boss 数据）：版权及相关权利归 **SQUARE ENIX CO., LTD.** 及该游戏原运营方所有，本仓库与权利人无任何关联、未获其授权或认可。
+- 本站为爱好者制作的非盈利资料查询工具，仅供个人学习、研究与怀旧参考；请勿将原始素材用于商业用途、二次分发或转售。收到权利人通知时应立即停止使用并删除相关素材。
+- 便携包内的 Node.js 运行时按 MIT 许可分发，详见包内 `LICENSE` 的第三方组件说明。

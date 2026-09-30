@@ -3,7 +3,22 @@
 # 必须整段跑在同一个 shell 进程里——本环境里后台进程会随命令结束被杀掉。
 #
 # 用法: sh tools/shot.sh <url> <out.png> [--width n] [--height n] [--wait ms] [--text file]
-CHROME="${KAIRI_CHROME:-/c/Users/Administrator/.agent-browser/browsers/chrome-154.0.8037.57/chrome.exe}"
+# 浏览器路径：优先 KAIRI_CHROME 环境变量，其次自动探测常见安装位置。
+find_chrome() {
+  if [ -n "$KAIRI_CHROME" ]; then printf '%s' "$KAIRI_CHROME"; return; fi
+  for c in "$HOME"/.agent-browser/browsers/*/chrome.exe \
+           "/c/Program Files/Google/Chrome/Application/chrome.exe" \
+           "/c/Program Files (x86)/Google/Chrome/Application/chrome.exe" \
+           "$LOCALAPPDATA/Google/Chrome/Application/chrome.exe"; do
+    [ -f "$c" ] && { printf '%s' "$c"; return; }
+  done
+  command -v google-chrome 2>/dev/null || command -v chromium 2>/dev/null
+}
+CHROME="$(find_chrome)"
+if [ -z "$CHROME" ] || [ ! -f "$CHROME" ]; then
+  echo "未找到 Chrome，请用 KAIRI_CHROME=<chrome.exe 完整路径> 指定。"
+  exit 1
+fi
 PORT="${KAIRI_CDP_PORT:-9222}"
 PROF="/tmp/kairi_chrome_prof"
 HERE="$(cd "$(dirname "$0")" && pwd)"

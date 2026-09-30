@@ -1,0 +1,7 @@
+{
+  "_说明": "把本文件复制为同目录下的 local_config.json，填入你自己机器上的实际路径即可。local_config.json 已被 .gitignore 忽略，不会提交到仓库。两项均可省略，省略时依次回落到环境变量（KAIRI_SRC / KAIRI_IMAGE_ROOT）或默认值。",
+  "_resourceSetDir": "游戏服务端资源集根目录（其下应有 _local/ 与 resources/ 两个子目录）",
+  "_imageRoot": "卡面原图根目录（其下为 chr51/）。留空则自动取 resourceSetDir/resources/image",
+  "resourceSetDir": "D:/games/kairisei-ma-cn602-server/resource-set",
+  "imageRoot": ""
+}

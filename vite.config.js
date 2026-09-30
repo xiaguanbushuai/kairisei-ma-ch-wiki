@@ -4,9 +4,25 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
 // 卡面图不复制进工程（共 5.5GB），直接按顺序在下列目录里查找并流式返回。
-// 顺序：缩略图缓存 -> 资源集原图。可用 KAIRI_IMAGE_ROOT 覆盖原图目录。
-const DEFAULT_IMAGE_ROOT = 'D:/新建文件夹 (2)/kairisei-ma-cn602-server/resource-set/resources/image'
-const IMAGE_ROOT = process.env.KAIRI_IMAGE_ROOT || DEFAULT_IMAGE_ROOT
+// 顺序：缩略图缓存 -> 资源集原图。
+// 路径来源与 tools/local_paths.py 保持同一套规则，两侧不要各自硬编码：
+//   环境变量 KAIRI_SRC / KAIRI_IMAGE_ROOT > tools/local_config.json > 默认值
+const LOCAL_CONFIG_FILE = path.resolve('tools/local_config.json')
+const localConfig = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(LOCAL_CONFIG_FILE, 'utf8'))
+  } catch {
+    return {}
+  }
+})()
+const RESOURCE_SET =
+  process.env.KAIRI_SRC ||
+  localConfig.resourceSetDir ||
+  path.resolve('..', 'kairisei-ma-cn602-server', 'resource-set')
+const IMAGE_ROOT =
+  process.env.KAIRI_IMAGE_ROOT ||
+  localConfig.imageRoot ||
+  path.join(RESOURCE_SET, 'resources', 'image')
 const THUMB_ROOT = path.resolve('.cache/thumbs')
 
 function createImageHandler(roots) {
