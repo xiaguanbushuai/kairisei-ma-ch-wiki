@@ -11,3 +11,6 @@ _local/
 # Python 字节码缓存
 __pycache__/
 *.pyc
+
+# 便携包构建输出
+release/
