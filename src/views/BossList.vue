@@ -75,6 +75,15 @@ const ATTR_BY_INDEX = { 1: 'FIRE', 2: 'ICE', 3: 'WIND', 4: 'LIGHT', 5: 'DARK' }
 
   <div v-else>
     <section class="panel">
+      <div class="notice" style="margin-bottom: 14px">
+        <span class="notice-mark">🚧</span>
+        <div>
+          <strong>Boss 行动表尚未开始制作。</strong>
+          本页目前只有副本波次、部位数值与掉落奖励；行动轴数据仅部分副本具备，
+          未整理的波次会直接不显示「行动轴」区块。
+        </div>
+      </div>
+
       <div class="panel-title">
         <h1 style="margin: 0">Boss 图鉴</h1>
         <span class="small muted">共 <strong>{{ filtered.length.toLocaleString() }}</strong> 条记录</span>

@@ -102,6 +102,17 @@ const entries = [
   <div>
     <section class="panel">
       <h1>乖离性百万亚瑟王 · 国服资料站</h1>
+
+      <div class="notice" style="margin-bottom: 14px">
+        <span class="notice-mark">🚧</span>
+        <div>
+          <strong>本站仍在制作中。</strong>
+          目前只有 <strong>卡牌查询</strong> 较为完善（多维筛选、技能数值解算、进化素材与升级经验）；
+          <strong>Boss 行动表尚未开始制作</strong>，Boss 页面暂时只提供部位数值、属性耐性与掉落奖励，
+          且仅覆盖部分副本。其余内容会陆续补充。
+        </div>
+      </div>
+
       <p class="muted" style="margin-top: -6px">
         停服纪念向的数据查询工具。数据直接提取自国服客户端主表，包含
         <template v-if="meta">

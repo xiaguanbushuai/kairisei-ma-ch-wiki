@@ -247,6 +247,38 @@ h3 {
   font-size: 11.5px;
 }
 
+/* 制作状态提示条：全部走主题变量，深色/浅色下都协调 */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--text-dim);
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.notice-mark {
+  flex: none;
+  color: var(--accent);
+}
+
+.notice strong {
+  color: var(--text);
+}
+
+.notice p {
+  margin: 0;
+}
+
+.notice p + p {
+  margin-top: 4px;
+}
+
 .row {
   display: flex;
   gap: 12px;
