@@ -154,6 +154,12 @@ dist/ → 便携包 web/
 [karisei-ma-ch-cards](https://github.com/xiaguanbushuai/karisei-ma-ch-cards)。
 便携包服务端支持 `.png` 请求自动回落到同名 `.webp`，下载后放入 `images/full/chr51/` 即用。
 
+## 致谢
+
+- **[kuuhaku1314/kairisei-ma-ch](https://github.com/kuuhaku1314/kairisei-ma-ch)** —— 《乖离性百万亚瑟王》国服社区保存与本地运行项目。
+  本站的全部卡牌数据与卡面立绘均取自该项目的资源集，没有它就没有这个资料站。感谢作者及所有参与保存这款游戏记忆的社区同好。
+- 以及《乖离性百万亚瑟王》国服的所有玩家——正是大家多年的记录与分享，让这些数据还能被拼凑完整。
+
 ## 授权与免责
 
 - **代码**：PolyForm Noncommercial 1.0.0 —— 允许非商业目的的使用、修改与分发，但必须保留授权声明；禁止任何商业用途。全文见根目录 [LICENSE](LICENSE)。
