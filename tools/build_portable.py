@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -158,11 +159,18 @@ def main() -> None:
 
     print("[6/6] 生成版本信息")
     stamp = time.strftime("%Y-%m-%d %H:%M:%S")
+    # 只记录版本号，不写入构建机的绝对路径（公开分发的包不留个人环境痕迹）
+    try:
+        node_ver = subprocess.run(
+            [str(node), "--version"], capture_output=True, text=True, timeout=15
+        ).stdout.strip() or "unknown"
+    except Exception:
+        node_ver = "unknown"
     (out / "BUILD.txt").write_text(
         "构成：\n"
         f"  构建时间 {stamp}\n"
         f"  图片档位 {'full' if args.full_images else 'thumbs-only'}\n"
-        f"  Node     {node}\n"
+        f"  Node     {node_ver}\n"
         f"  包含     web/ + images/ + runtime/node.exe\n",
         encoding="utf-8",
     )
