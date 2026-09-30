@@ -14,3 +14,6 @@ __pycache__/
 
 # 便携包构建输出
 release/
+
+# 便携包构建输出
+release/
