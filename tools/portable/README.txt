@@ -29,7 +29,7 @@
      极简版只打包了缩略图，详情页会自动用缩略图代替原图。
      想恢复高清：从卡面资源仓库下载后，把所有 .webp 文件放进
      images/full/chr51/ 目录即可（服务端会自动识别 WebP，无需改名）。
-       https://github.com/xiaguanbushuai/karisei-ma-ch-cards
+       https://github.com/xiaguanbushuai/kairisei-ma-ch-cards
   3) 换电脑后数据不更新？
      数据来自 web/data/ 下的 JSON；更新数据需要重新生成后替换该目录。
 

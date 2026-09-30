@@ -15,7 +15,7 @@
 
 ## 快速开始（只使用，不开发）
 
-1. 到 [Releases](https://github.com/xiaguanbushuai/karisei-ma-ch-wiki/releases/latest) 下载 `kairisei-wiki-portable-*.zip`
+1. 到 [Releases](https://github.com/xiaguanbushuai/kairisei-ma-ch-wiki/releases/latest) 下载 `kairisei-wiki-portable-*.zip`
 2. 解压后双击 `start.cmd`，浏览器自动打开 `http://127.0.0.1:5173/`
 3. 关闭黑色命令窗口即退出
 
@@ -35,8 +35,8 @@
 ### 1. 拉取代码
 
 ```bash
-git clone git@github.com:xiaguanbushuai/karisei-ma-ch-wiki.git
-cd karisei-ma-ch-wiki
+git clone git@github.com:xiaguanbushuai/kairisei-ma-ch-wiki.git
+cd kairisei-ma-ch-wiki
 ```
 
 ### 2. 安装依赖
@@ -151,8 +151,12 @@ dist/ → 便携包 web/
 ## 卡面资源备份
 
 原始 PNG（5.4GB）超出 GitHub 仓库限制，已转码为 WebP q85（约 1.0GB，画质无可感知差异）单独存放：
-[karisei-ma-ch-cards](https://github.com/xiaguanbushuai/karisei-ma-ch-cards)。
-便携包服务端支持 `.png` 请求自动回落到同名 `.webp`，下载后放入 `images/full/chr51/` 即用。
+[kairisei-ma-ch-cards](https://github.com/xiaguanbushuai/kairisei-ma-ch-cards)。
+
+只想拿图不必克隆 1GB 仓库 —— 到该仓库的
+[Releases](https://github.com/xiaguanbushuai/kairisei-ma-ch-cards/releases/latest)
+下载两个分卷 zip（`chr51-cards-part1of2.zip` / `chr51-cards-part2of2.zip`）解压合并即可。
+便携包服务端支持 `.png` 请求自动回落到同名 `.webp`，放入 `images/full/chr51/` 即用。
 
 ## 致谢
 
